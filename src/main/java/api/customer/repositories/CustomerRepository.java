@@ -1,23 +1,33 @@
 package api.customer.repositories;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import api.customer.interfaces.CustomerRepositoryInterface;
+import api.customer.interfaces.ICustomerRepository;
 import api.customer.models.Customer;
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+/**
+ * Implementación del repositorio de clientes.
+ * Proporciona métodos para realizar operaciones CRUD en la base de datos.
+ */
 @ApplicationScoped
-public class CustomerRepository implements CustomerRepositoryInterface {
+public class CustomerRepository implements ICustomerRepository {
 
     @Inject
     AgroalDataSource dataSource;
 
-    // 1. Crear un nuevo cliente
+    /**
+     * Crea un nuevo cliente en la base de datos.
+     *
+     * @param customer El cliente a crear.
+     * @return `true` si el cliente fue creado con éxito, de lo contrario `false`.
+     */
     @Override
     public boolean createCustomer(Customer customer) {
         String query = """
@@ -47,7 +57,11 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         }
     }
 
-    // 2. Obtener todos los clientes existentes
+    /**
+     * Obtiene una lista de todos los clientes almacenados en la base de datos.
+     *
+     * @return Una lista de objetos `Customer` que representan a todos los clientes.
+     */
     @Override
     public List<Customer> findAll() {
         String query = "SELECT * FROM customer";
@@ -69,7 +83,12 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         return customers;
     }
 
-    // 3. Obtener todos los clientes por país
+    /**
+     * Obtiene una lista de clientes filtrados por código de país.
+     *
+     * @param country Código del país (ISO numérico).
+     * @return Una lista de clientes pertenecientes al país especificado.
+     */
     @Override
     public List<Customer> findByCountry(short country) {
         String query = "SELECT * FROM customer WHERE country = ?";
@@ -93,7 +112,12 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         return customers;
     }
 
-    // 4. Obtener un cliente por ID
+    /**
+     * Busca un cliente por su identificador único.
+     *
+     * @param customerId Identificador único del cliente.
+     * @return Un objeto `Customer` si se encuentra el cliente, de lo contrario `null`.
+     */
     @Override
     public Customer findById(int customerId) {
         String query = "SELECT * FROM customer WHERE customerid = ?";
@@ -114,7 +138,16 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         return null;
     }
 
-    // 5. Actualizar un cliente existente
+    /**
+     * Actualiza los datos de un cliente existente en la base de datos.
+     *
+     * @param customerId Identificador único del cliente.
+     * @param email      Nuevo correo electrónico.
+     * @param address    Nueva dirección.
+     * @param phone      Nuevo número de teléfono.
+     * @param country    Nuevo código de país.
+     * @return `true` si el cliente fue actualizado con éxito, de lo contrario `false`.
+     */
     @Override
     public boolean updateCustomer(int customerId, String email, String address, String phone, short country) {
         String query = """
@@ -140,7 +173,12 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         }
     }
 
-    // 6. Eliminar un cliente por ID
+    /**
+     * Elimina un cliente de la base de datos por su identificador único.
+     *
+     * @param customerId Identificador único del cliente.
+     * @return `true` si el cliente fue eliminado con éxito, de lo contrario `false`.
+     */
     @Override
     public boolean deleteCustomer(int customerId) {
         String query = "DELETE FROM customer WHERE customerid = ?";
@@ -157,7 +195,13 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         }
     }
 
-    // Método auxiliar para mapear el ResultSet a un objeto Customer
+    /**
+     * Mapea un resultado del `ResultSet` a un objeto `Customer`.
+     *
+     * @param resultSet El conjunto de resultados de una consulta.
+     * @return Un objeto `Customer` con los datos extraídos del `ResultSet`.
+     * @throws Exception Si ocurre algún error al procesar el conjunto de resultados.
+     */
     private Customer mapResultSetToCustomer(ResultSet resultSet) throws Exception {
         Customer customer = new Customer();
         customer.setCustomerId(resultSet.getInt("customerid"));
