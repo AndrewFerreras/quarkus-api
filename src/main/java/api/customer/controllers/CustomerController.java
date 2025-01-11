@@ -2,6 +2,8 @@ package api.customer.controllers;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import api.customer.models.Customer;
 import api.customer.services.CustomerService;
 import jakarta.inject.Inject;
@@ -80,8 +82,16 @@ public class CustomerController {
      * @return Lista de clientes.
      */
     @GET
-    public List<Customer> getAllCustomers() {
-        return service.findAll();
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAllCustomers() {
+        List<Customer> customers = service.findAll();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(customers);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error al serializar datos.";
+        }
     }
 
     /**
@@ -97,15 +107,23 @@ public class CustomerController {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("ID must be greater than 0").build();
         }
-
+    
         Customer customer = service.findById(id);
         if (customer == null) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("Customer not found").build();
         }
-        return Response.ok(customer).build();
+    
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String json = objectMapper.writeValueAsString(customer);
+            return Response.ok(json).type(MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Error serializing customer").build();
+        }
     }
-
     /**
      * Obtiene una lista de clientes filtrados por el código de país.
      *
@@ -119,13 +137,22 @@ public class CustomerController {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("Country code must be greater than 0").build();
         }
-
+    
         List<Customer> customers = service.findByCountry(code);
         if (customers.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("No customers found for the given country code").build();
         }
-        return Response.ok(customers).build();
+    
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String json = objectMapper.writeValueAsString(customers);
+            return Response.ok(json).type(MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Error serializing data").build();
+        }
     }
 
     /**

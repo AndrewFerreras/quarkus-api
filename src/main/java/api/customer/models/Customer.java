@@ -1,24 +1,49 @@
 package api.customer.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Clase que representa un cliente.
  * Contiene las propiedades necesarias para almacenar y gestionar la información de un cliente.
  */
 public class Customer {
 
+    @JsonProperty("customerId")
     private Integer customerId; // Identificador único del cliente
+
+    @JsonProperty("firstName")
     private String firstName; // Primer nombre del cliente
+
+    @JsonProperty("middleName")
     private String middleName; // Segundo nombre del cliente (opcional)
+
+    @JsonProperty("lastName")
     private String lastName; // Primer apellido del cliente
+
+    @JsonProperty("secondLastName")
     private String secondLastName; // Segundo apellido del cliente (opcional)
+
+    @JsonProperty("email")
     private String email; // Correo electrónico del cliente
+
+    @JsonProperty("address")
     private String address; // Dirección del cliente
+
+    @JsonProperty("phone")
     private String phone; // Número de teléfono del cliente
+
+    @JsonProperty("country")
     private Short country; // Código del país del cliente (ISO numérico)
+
+    @JsonProperty("demonym")
     private String demonym; // Gentilicio del cliente basado en su país
+
+    @JsonProperty("disable")
     private Boolean disable; // Indicador de si el cliente está deshabilitado (true o false)
 
     // Getters y Setters
+
+// Getters y Setters
 
     /**
      * Obtiene el identificador único del cliente.
@@ -217,4 +242,5 @@ public class Customer {
     public void setDisable(Boolean disable) {
         this.disable = disable;
     }
+
 }

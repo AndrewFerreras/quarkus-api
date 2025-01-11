@@ -75,7 +75,6 @@ public class CustomerRepository implements ICustomerRepository {
                 Customer customer = mapResultSetToCustomer(resultSet);
                 customers.add(customer);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
