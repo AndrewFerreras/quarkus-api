@@ -1,16 +1,22 @@
 package api.customer.services;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
+import api.customer.interfaces.ICountryService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
-public class CountryService {
+public class CountryService implements  ICountryService{
 
     private static final String BASE_URL = "https://restcountries.com/v3.1";
     private final Client client;
@@ -83,26 +89,36 @@ public class CountryService {
         return false; // Prefijo no válido o ocurrió un error
     }
 
+    @Override
     public String getDemonym(String countryCode) {
-        if (countryCode == null || countryCode.trim().isEmpty()) {
-            return null;
-        }
+        String url = "https://restcountries.com/v3.1/alpha/" + countryCode;
 
         try {
-            WebTarget target = client.target(BASE_URL).path("/alpha").path(countryCode);
-            Response response = target.request().get();
+            // Realizar la solicitud HTTP
+            Response response = ClientBuilder.newClient()
+                .target(url)
+                .request()
+                .get();
 
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                Map<String, Object> countryData = response.readEntity(Map.class);
+            if (response.getStatus() == 200) {
+                // Leer la respuesta como cadena JSON
+                String jsonResponse = response.readEntity(String.class);
 
-                if (countryData.containsKey("demonyms")) {
-                    Map<String, Object> demonyms = (Map<String, Object>) countryData.get("demonyms");
+                // Usar un lector JSON para parsear la respuesta
+                try (JsonReader jsonReader = Json.createReader(new StringReader(jsonResponse))) {
+                    JsonArray jsonArray = jsonReader.readArray();
 
-                    if (demonyms.containsKey("eng")) {
-                        Map<String, String> eng = (Map<String, String>) demonyms.get("eng");
+                    // Obtener el primer objeto del arreglo
+                    if (!jsonArray.isEmpty()) {
+                        JsonObject countryObject = jsonArray.getJsonObject(0);
 
-                        if (eng.containsKey("m")) {
-                            return eng.get("m"); // Gentilicio en masculino
+                        // Extraer el gentilicio
+                        JsonObject demonyms = countryObject.getJsonObject("demonyms");
+                        if (demonyms != null) {
+                            JsonObject eng = demonyms.getJsonObject("eng");
+                            if (eng != null) {
+                                return eng.getString("m", null); // Obtener el gentilicio masculino
+                            }
                         }
                     }
                 }
@@ -110,6 +126,7 @@ public class CountryService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null; // No se encontró el gentilicio o ocurrió un error
+
+        return null; // Retornar null si no se encuentra el gentilicio
     }
 }

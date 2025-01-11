@@ -4,9 +4,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import api.customer.interfaces.ICountryService;
 import api.customer.models.Customer;
 import api.customer.services.CustomerService;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -19,6 +22,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+
 /**
  * Controlador REST para gestionar operaciones relacionadas con clientes.
  * Proporciona endpoints para realizar operaciones CRUD sobre los clientes.
@@ -30,52 +34,49 @@ public class CustomerController {
 
     @Inject
     private CustomerService service;
-
+   @Inject
+    private ICountryService countryService;
     /**
      * Crea un nuevo cliente.
      *
      * @param customer Objeto `Customer` con los datos del cliente.
      * @return Respuesta HTTP con código de estado y mensaje correspondiente.
      */
+   /*
+    }*/
+    
     @POST
-    public Response createCustomer(Customer customer) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createCustomer(String requestBody) {
         try {
-            // Validación manual de los datos
-            if (customer == null ||
-                isNullOrEmpty(customer.getFirstName()) ||
-                isNullOrEmpty(customer.getLastName()) ||
-                !isValidEmail(customer.getEmail()) ||
-                isNullOrEmpty(customer.getPhone()) ||
-                customer.getPhone().length() < 10 ||
-                customer.getPhone().length() > 15) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid customer data").build();
-            }
-
-            boolean success = service.createCustomer(
-                customer.getFirstName(),
-                customer.getMiddleName(),
-                customer.getLastName(),
-                customer.getSecondLastName(),
-                customer.getEmail(),
-                customer.getAddress(),
-                customer.getPhone(),
-                customer.getCountry(),
-                customer.getDemonym()
-            );
-
-            if (success) {
-                return Response.status(Response.Status.CREATED).build();
-            } else {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Error creating customer").build();
-            }
+            // Crear un ObjectMapper de Jackson
+            ObjectMapper objectMapper = new ObjectMapper();
+    
+            // Convertir el JSON recibido en un objeto Customer
+            Customer customer = objectMapper.readValue(requestBody, Customer.class);
+    
+            // Lógica para guardar el cliente
+            boolean success = this.service.createCustomer(customer);
+    
+            // Serializar el objeto Customer de nuevo a JSON
+            String json = objectMapper.writeValueAsString(customer);
+    
+            // Responder según el resultado
+            return success
+                ? Response.status(Response.Status.CREATED).entity(json).type("application/json").build()
+                : Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Error creating customer\"}").type("application/json").build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity("Invalid JSON or error processing request: " + e.getMessage()).build();
+            e.printStackTrace();
+    
+            // Retornar un error en formato JSON
+            String errorJson = String.format("{\"error\": \"Error processing request: %s\"}", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(errorJson)
+                .type("application/json")
+                .build();
         }
     }
-
     /**
      * Obtiene todos los clientes registrados.
      *
@@ -168,11 +169,11 @@ public class CustomerController {
     @PUT
     @Path("/{id}")
     public Response updateCustomer(
-        @PathParam("id") int id,
-        @QueryParam("email") String email,
-        @QueryParam("address") String address,
-        @QueryParam("phone") String phone,
-        @QueryParam("country") short country
+       @PathParam("id") int id,
+        @QueryParam("email") @Email String email,
+        @QueryParam("address") @Size(max = 180) String address,
+        @QueryParam("phone") @Size(max = 15) String phone,
+        @QueryParam("country") Short country
     ) {
         if (id <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -187,6 +188,17 @@ public class CustomerController {
         if (phone != null && (phone.length() < 10 || phone.length() > 15)) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("Phone must be between 10 and 15 characters").build();
+        }
+
+         // Validación adicional con CountryService
+         if (!countryService.isValidCountryCode(Integer.toString(country))) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("Invalid country code").build();
+        }
+
+        if (!countryService.isPhonePrefixForCountry(Integer.toString(country), phone)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("Phone prefix does not match the country").build();
         }
 
         boolean success = service.updateCustomer(id, email, address, phone, country);

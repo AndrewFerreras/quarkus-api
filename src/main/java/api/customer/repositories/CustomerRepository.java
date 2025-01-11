@@ -3,6 +3,7 @@ package api.customer.repositories;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,31 +33,32 @@ public class CustomerRepository implements ICustomerRepository {
     public boolean createCustomer(Customer customer) {
         String query = """
             INSERT INTO customer (customerid, firstname, middlename, lastname, secondlastname, email, address, phone, country, demonym, disable)
-            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
-
+    
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-
-            statement.setString(1, customer.getFirstName());
-            statement.setString(2, customer.getMiddleName());
-            statement.setString(3, customer.getLastName());
-            statement.setString(4, customer.getSecondLastName());
-            statement.setString(5, customer.getEmail());
-            statement.setString(6, customer.getAddress());
-            statement.setString(7, customer.getPhone());
-            statement.setShort(8, customer.getCountry());
-            statement.setString(9, customer.getDemonym());
-            statement.setBoolean(10, customer.getDisable());
-
+    
+            statement.setInt(1, customer.getCustomerId()); // Usa el ID generado
+            statement.setString(2, customer.getFirstName());
+            statement.setString(3, customer.getMiddleName());
+            statement.setString(4, customer.getLastName());
+            statement.setString(5, customer.getSecondLastName());
+            statement.setString(6, customer.getEmail());
+            statement.setString(7, customer.getAddress());
+            statement.setString(8, customer.getPhone());
+            statement.setShort(9, customer.getCountry());
+            statement.setString(10, customer.getDemonym());
+            statement.setBoolean(11, customer.getDisable());
+    
             return statement.executeUpdate() > 0;
-
+    
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-
+    
     /**
      * Obtiene una lista de todos los clientes almacenados en la base de datos.
      *
@@ -64,7 +66,7 @@ public class CustomerRepository implements ICustomerRepository {
      */
     @Override
     public List<Customer> findAll() {
-        String query = "SELECT * FROM customer";
+        String query = "SELECT * FROM customer WHERE disable = 0";
         List<Customer> customers = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
@@ -90,7 +92,7 @@ public class CustomerRepository implements ICustomerRepository {
      */
     @Override
     public List<Customer> findByCountry(short country) {
-        String query = "SELECT * FROM customer WHERE country = ?";
+        String query = "SELECT * FROM customer WHERE country = ? AND disable = 0";
         List<Customer> customers = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
@@ -119,7 +121,7 @@ public class CustomerRepository implements ICustomerRepository {
      */
     @Override
     public Customer findById(int customerId) {
-        String query = "SELECT * FROM customer WHERE customerid = ?";
+        String query = "SELECT * FROM customer WHERE customerid = ? AND disable = 0";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
@@ -148,11 +150,11 @@ public class CustomerRepository implements ICustomerRepository {
      * @return `true` si el cliente fue actualizado con éxito, de lo contrario `false`.
      */
     @Override
-    public boolean updateCustomer(int customerId, String email, String address, String phone, short country) {
+    public boolean updateCustomer(int customerId, String email, String address, String phone, short country,String demonym) {
         String query = """
             UPDATE customer
-            SET email = ?, address = ?, phone = ?, country = ?
-            WHERE customerid = ?
+            SET email = ?, address = ?, phone = ?, country = ?, demonym = ?
+            WHERE customerid = ? AND disable = 0
             """;
 
         try (Connection connection = dataSource.getConnection();
@@ -162,7 +164,8 @@ public class CustomerRepository implements ICustomerRepository {
             statement.setString(2, address);
             statement.setString(3, phone);
             statement.setShort(4, country);
-            statement.setInt(5, customerId);
+            statement.setString(5, demonym);
+            statement.setInt(6, customerId);
 
             return statement.executeUpdate() > 0;
 
@@ -180,7 +183,7 @@ public class CustomerRepository implements ICustomerRepository {
      */
     @Override
     public boolean deleteCustomer(int customerId) {
-        String query = "DELETE FROM customer WHERE customerid = ?";
+        String query = "UPDATE customer SET disable = 1 WHERE customerid = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -215,5 +218,94 @@ public class CustomerRepository implements ICustomerRepository {
         customer.setDemonym(resultSet.getString("demonym"));
         customer.setDisable(resultSet.getBoolean("disable"));
         return customer;
+    }
+    @Override
+    public Integer generateCustomerId() {
+        String query = "SELECT COALESCE(MAX(customerid), 0) + 1 AS id FROM customer";
+
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt("id");
+            } else {
+                // No debería llegar aquí porque COALESCE asegura un resultado
+                return 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Lanza una excepción más descriptiva
+            throw new RuntimeException("Error generating customer ID", e);
+        }
+    }
+
+    public boolean emailExists(String email) {
+        String query = "SELECT COUNT(*) FROM customer WHERE email = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, email);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean phoneExists(String phone) {
+        String query = "SELECT COUNT(*) FROM customer WHERE phone = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, phone);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean emailExistsForOtherCustomer(int customerId, String email) {
+        String query = "SELECT COUNT(*) FROM customer WHERE email = ? AND customerid <> ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, email);
+            statement.setInt(2, customerId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean phoneExistsForOtherCustomer(int customerId, String phone) {
+        String query = "SELECT COUNT(*) FROM customer WHERE phone = ? AND customerid <> ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, phone);
+            statement.setInt(2, customerId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

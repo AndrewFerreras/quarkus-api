@@ -23,8 +23,7 @@ public interface ICustomerservices {
      * @param demonym         Gentilicio del país del cliente.
      * @return `true` si el cliente fue creado con éxito, de lo contrario `false`.
      */
-    boolean createCustomer(String firstname, String middlename, String lastname, String secondlastname,
-                           String email, String address, String phone, int country, String demonym);
+    boolean createCustomer(Customer customer);
 
     /**
      * Obtiene una lista de todos los clientes registrados.

@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS customer (
     secondlastname VARCHAR(15) DEFAULT NULL,
     email VARCHAR(35) NOT NULL,
     address VARCHAR(180) NOT NULL,
-    phone VARCHAR(25) NOT NULL,
+    phone VARCHAR(15) NOT NULL,
     country SMALLINT NOT NULL,
-    demonym VARCHAR(25) NOT NULL,
+    demonym VARCHAR(15) NOT NULL,
     disable BOOLEAN NOT NULL DEFAULT FALSE
 );
 

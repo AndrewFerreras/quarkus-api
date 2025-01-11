@@ -51,7 +51,7 @@ public interface ICustomerRepository {
      * @param country    Nuevo código del país del cliente.
      * @return `true` si el cliente fue actualizado con éxito, de lo contrario `false`.
      */
-    boolean updateCustomer(int customerId, String email, String address, String phone, short country);
+    boolean updateCustomer(int customerId, String email, String address, String phone, short country,String demonym);
 
     /**
      * Elimina un cliente del repositorio.
@@ -60,4 +60,14 @@ public interface ICustomerRepository {
      * @return `true` si el cliente fue eliminado con éxito, de lo contrario `false`.
      */
     boolean deleteCustomer(int customerId);
+
+    Integer generateCustomerId();
+    
+    boolean emailExists(String email);
+
+    boolean phoneExists(String phone);
+
+    boolean emailExistsForOtherCustomer(int customerId, String email);
+
+    boolean phoneExistsForOtherCustomer(int customerId, String phone);
 }
