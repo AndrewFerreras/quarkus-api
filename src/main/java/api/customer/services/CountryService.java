@@ -59,25 +59,29 @@ public class CountryService implements  ICountryService{
             countryCode.trim().isEmpty() || phonePrefix.trim().isEmpty()) {
             return false;
         }
-
+    
         try {
             WebTarget target = client.target(BASE_URL).path("/alpha").path(countryCode);
             Response response = target.request().get();
-
+    
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                Map<String, Object> countryData = response.readEntity(Map.class);
-
-                if (countryData.containsKey("idd")) {
-                    Map<String, Object> idd = (Map<String, Object>) countryData.get("idd");
-
-                    if (idd.containsKey("root") && idd.containsKey("suffixes")) {
-                        String root = (String) idd.get("root");
-                        List<String> suffixes = (List<String>) idd.get("suffixes");
-
-                        // Comparar el prefijo completo (root + suffix)
-                        for (String suffix : suffixes) {
-                            if (phonePrefix.equals(root + suffix)) {
-                                return true; // Prefijo válido para el país
+                List<Map<String, Object>> countriesData = response.readEntity(List.class);
+    
+                if (countriesData != null && !countriesData.isEmpty()) {
+                    Map<String, Object> countryData = countriesData.get(0);
+    
+                    if (countryData.containsKey("idd")) {
+                        Map<String, Object> idd = (Map<String, Object>) countryData.get("idd");
+    
+                        if (idd.containsKey("root") && idd.containsKey("suffixes")) {
+                            String root = (String) idd.get("root");
+                            List<String> suffixes = (List<String>) idd.get("suffixes");
+    
+                            for (String suffix : suffixes) {
+                                String fullPrefix = root + suffix;
+                                if (fullPrefix.equals(root+phonePrefix.substring(0,suffix.length()))) {
+                                    return true;
+                                }
                             }
                         }
                     }
@@ -88,6 +92,7 @@ public class CountryService implements  ICountryService{
         }
         return false; // Prefijo no válido o ocurrió un error
     }
+    
 
     @Override
     public String getDemonym(String countryCode) {
