@@ -56,6 +56,13 @@ public class CustomerController {
             // Convertir el JSON recibido en un objeto Customer
             Customer customer = objectMapper.readValue(requestBody, Customer.class);
     
+             // Limpiar campos opcionales
+            if (customer.getMiddleName() != null && customer.getMiddleName().trim().isEmpty()) {
+                customer.setMiddleName(null);
+            }
+            if (customer.getSecondLastName() != null && customer.getSecondLastName().trim().isEmpty()) {
+                customer.setSecondLastName(null);
+            }
             // Lógica para guardar el cliente
             boolean success = this.service.createCustomer(customer);
     
