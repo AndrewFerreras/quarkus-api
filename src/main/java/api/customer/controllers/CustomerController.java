@@ -33,17 +33,17 @@ import jakarta.ws.rs.core.Response;
 public class CustomerController {
 
     @Inject
-    private CustomerService service;
-   @Inject
-    private ICountryService countryService;
+    private CustomerService service; // Servicio principal para la lógica de negocio de clientes.
+    @Inject
+    private ICountryService countryService; // Servicio para validar información relacionada con países.
+   
     /**
      * Crea un nuevo cliente.
+     * Convierte un JSON de entrada en un objeto Customer, valida y guarda los datos.
      *
-     * @param customer Objeto `Customer` con los datos del cliente.
-     * @return Respuesta HTTP con código de estado y mensaje correspondiente.
+     * @param requestBody JSON con los datos del cliente a crear.
+     * @return Respuesta HTTP con el estado de la operación.
      */
-   /*
-    }*/
     
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -234,16 +234,6 @@ public class CustomerController {
     }
 
     // Métodos auxiliares para validación de datos
-
-    /**
-     * Verifica si una cadena de texto es nula o está vacía.
-     *
-     * @param value Cadena de texto a verificar.
-     * @return `true` si la cadena es nula o está vacía, de lo contrario `false`.
-     */
-    private boolean isNullOrEmpty(String value) {
-        return value == null || value.trim().isEmpty();
-    }
 
     /**
      * Valida el formato de una dirección de correo electrónico.
