@@ -219,6 +219,15 @@ public class CustomerRepository implements ICustomerRepository {
         customer.setDisable(resultSet.getBoolean("disable"));
         return customer;
     }
+
+    /**
+     * Genera un nuevo identificador único para un cliente.
+     * Utiliza una consulta SQL para encontrar el valor máximo actual de los IDs en la base de datos
+     * y lo incrementa en 1.
+     *
+     * @return El próximo identificador disponible para un cliente.
+     * @throws RuntimeException Si ocurre un error al generar el ID.
+     */
     @Override
     public Integer generateCustomerId() {
         String query = "SELECT COALESCE(MAX(customerid), 0) + 1 AS id FROM customer";
@@ -239,7 +248,12 @@ public class CustomerRepository implements ICustomerRepository {
             throw new RuntimeException("Error generating customer ID", e);
         }
     }
-
+    /**
+     * Verifica si un correo electrónico ya existe en la base de datos.
+     *
+     * @param email Correo electrónico a verificar.
+     * @return `true` si el correo existe en la base de datos, de lo contrario `false`.
+     */
     public boolean emailExists(String email) {
         String query = "SELECT COUNT(*) FROM customer WHERE email = ?";
         try (Connection connection = dataSource.getConnection();
@@ -255,7 +269,12 @@ public class CustomerRepository implements ICustomerRepository {
         }
         return false;
     }
-    
+    /**
+     * Verifica si un número de teléfono ya existe en la base de datos.
+     *
+     * @param phone Número de teléfono a verificar.
+     * @return `true` si el número existe en la base de datos, de lo contrario `false`.
+     */
     @Override
     public boolean phoneExists(String phone) {
         String query = "SELECT COUNT(*) FROM customer WHERE phone = ?";
@@ -273,6 +292,14 @@ public class CustomerRepository implements ICustomerRepository {
         return false;
     }
     
+
+    /**
+     * Verifica si un correo electrónico ya existe para otro cliente distinto al proporcionado.
+     *
+     * @param customerId ID del cliente actual.
+     * @param email      Correo electrónico a verificar.
+     * @return `true` si el correo existe para otro cliente, de lo contrario `false`.
+     */
     @Override
     public boolean emailExistsForOtherCustomer(int customerId, String email) {
         String query = "SELECT COUNT(*) FROM customer WHERE email = ? AND customerid <> ?";
@@ -290,7 +317,13 @@ public class CustomerRepository implements ICustomerRepository {
         }
         return false;
     }
-    
+    /**
+     * Verifica si un número de teléfono ya existe para otro cliente distinto al proporcionado.
+     *
+     * @param customerId ID del cliente actual.
+     * @param phone      Número de teléfono a verificar.
+     * @return `true` si el número existe para otro cliente, de lo contrario `false`.
+     */
     @Override
     public boolean phoneExistsForOtherCustomer(int customerId, String phone) {
         String query = "SELECT COUNT(*) FROM customer WHERE phone = ? AND customerid <> ?";

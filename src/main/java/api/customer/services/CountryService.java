@@ -15,18 +15,26 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Servicio para gestionar información de países usando la API de RestCountries.
+ * Proporciona métodos para validar códigos de país, verificar prefijos telefónicos
+ * y obtener el gentilicio de un país.
+ */
 @ApplicationScoped
-public class CountryService implements  ICountryService{
+public class CountryService implements ICountryService {
 
     private static final String BASE_URL = "https://restcountries.com/v3.1";
     private final Client client;
 
+    /**
+     * Constructor que inicializa el cliente HTTP.
+     */
     public CountryService() {
         this.client = ClientBuilder.newClient();
     }
 
     /**
-     * Valida si un código de país es válido.
+     * Valida si un código de país es válido utilizando la API de RestCountries.
      *
      * @param countryCode Código del país (ISO 3166-1 alfa-3).
      * @return `true` si el código de país es válido, de lo contrario `false`.
@@ -40,11 +48,12 @@ public class CountryService implements  ICountryService{
             WebTarget target = client.target(BASE_URL).path("/alpha").path(countryCode);
             Response response = target.request().get();
 
+            // El código de país es válido si la respuesta es 200 (OK).
             return response.getStatus() == Response.Status.OK.getStatusCode();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return false; // Retorna falso si ocurre un error.
     }
 
     /**
@@ -59,27 +68,29 @@ public class CountryService implements  ICountryService{
             countryCode.trim().isEmpty() || phonePrefix.trim().isEmpty()) {
             return false;
         }
-    
+
         try {
             WebTarget target = client.target(BASE_URL).path("/alpha").path(countryCode);
             Response response = target.request().get();
-    
+
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+                // Extraer datos del país desde la respuesta.
                 List<Map<String, Object>> countriesData = response.readEntity(List.class);
-    
+
                 if (countriesData != null && !countriesData.isEmpty()) {
                     Map<String, Object> countryData = countriesData.get(0);
-    
+
                     if (countryData.containsKey("idd")) {
                         Map<String, Object> idd = (Map<String, Object>) countryData.get("idd");
-    
+
                         if (idd.containsKey("root") && idd.containsKey("suffixes")) {
                             String root = (String) idd.get("root");
                             List<String> suffixes = (List<String>) idd.get("suffixes");
-    
+
                             for (String suffix : suffixes) {
                                 String fullPrefix = root + suffix;
-                                if (fullPrefix.equals(root+phonePrefix.substring(0,suffix.length()))) {
+                                // Validar si el prefijo coincide con el formato esperado.
+                                if (fullPrefix.equals(root + phonePrefix.substring(0, suffix.length()))) {
                                     return true;
                                 }
                             }
@@ -90,39 +101,44 @@ public class CountryService implements  ICountryService{
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false; // Prefijo no válido o ocurrió un error
+        return false; // Retorna falso si ocurre un error o el prefijo no coincide.
     }
-    
 
+    /**
+     * Obtiene el gentilicio de un país (en inglés) basado en su código.
+     *
+     * @param countryCode Código del país (ISO 3166-1 alfa-3).
+     * @return El gentilicio en inglés (masculino) si está disponible, de lo contrario `null`.
+     */
     @Override
     public String getDemonym(String countryCode) {
-        String url = "https://restcountries.com/v3.1/alpha/" + countryCode;
+        String url = BASE_URL + "/alpha/" + countryCode;
 
         try {
-            // Realizar la solicitud HTTP
+            // Realizar la solicitud HTTP a la API de RestCountries.
             Response response = ClientBuilder.newClient()
                 .target(url)
                 .request()
                 .get();
 
-            if (response.getStatus() == 200) {
-                // Leer la respuesta como cadena JSON
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+                // Leer la respuesta como cadena JSON.
                 String jsonResponse = response.readEntity(String.class);
 
-                // Usar un lector JSON para parsear la respuesta
+                // Usar un lector JSON para parsear la respuesta.
                 try (JsonReader jsonReader = Json.createReader(new StringReader(jsonResponse))) {
                     JsonArray jsonArray = jsonReader.readArray();
 
-                    // Obtener el primer objeto del arreglo
+                    // Extraer el primer objeto del arreglo.
                     if (!jsonArray.isEmpty()) {
                         JsonObject countryObject = jsonArray.getJsonObject(0);
 
-                        // Extraer el gentilicio
+                        // Obtener el objeto "demonyms".
                         JsonObject demonyms = countryObject.getJsonObject("demonyms");
                         if (demonyms != null) {
                             JsonObject eng = demonyms.getJsonObject("eng");
                             if (eng != null) {
-                                return eng.getString("m", null); // Obtener el gentilicio masculino
+                                return eng.getString("m", null); // Retorna el gentilicio masculino.
                             }
                         }
                     }
@@ -132,6 +148,6 @@ public class CountryService implements  ICountryService{
             e.printStackTrace();
         }
 
-        return null; // Retornar null si no se encuentra el gentilicio
+        return null; // Retorna null si no se encuentra el gentilicio o ocurre un error.
     }
 }

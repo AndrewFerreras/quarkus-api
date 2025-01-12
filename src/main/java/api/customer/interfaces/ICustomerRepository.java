@@ -6,6 +6,7 @@ import api.customer.models.Customer;
 
 /**
  * Interfaz para gestionar operaciones CRUD de clientes en el repositorio.
+ * Define los métodos que deben implementarse para interactuar con los datos de clientes.
  */
 public interface ICustomerRepository {
 
@@ -49,9 +50,10 @@ public interface ICustomerRepository {
      * @param address    Nueva dirección del cliente.
      * @param phone      Nuevo número de teléfono del cliente.
      * @param country    Nuevo código del país del cliente.
+     * @param demonym    Nuevo gentilicio del cliente.
      * @return `true` si el cliente fue actualizado con éxito, de lo contrario `false`.
      */
-    boolean updateCustomer(int customerId, String email, String address, String phone, short country,String demonym);
+    boolean updateCustomer(int customerId, String email, String address, String phone, short country, String demonym);
 
     /**
      * Elimina un cliente del repositorio.
@@ -61,13 +63,44 @@ public interface ICustomerRepository {
      */
     boolean deleteCustomer(int customerId);
 
+    /**
+     * Genera un identificador único para un nuevo cliente.
+     *
+     * @return Un número entero que representa el nuevo ID del cliente.
+     */
     Integer generateCustomerId();
-    
+
+    /**
+     * Verifica si un correo electrónico ya existe en el repositorio.
+     *
+     * @param email Correo electrónico a verificar.
+     * @return `true` si el correo electrónico ya existe, de lo contrario `false`.
+     */
     boolean emailExists(String email);
 
+    /**
+     * Verifica si un número de teléfono ya existe en el repositorio.
+     *
+     * @param phone Número de teléfono a verificar.
+     * @return `true` si el número de teléfono ya existe, de lo contrario `false`.
+     */
     boolean phoneExists(String phone);
 
+    /**
+     * Verifica si un correo electrónico ya existe para otro cliente distinto al proporcionado.
+     *
+     * @param customerId Identificador único del cliente actual.
+     * @param email      Correo electrónico a verificar.
+     * @return `true` si el correo ya existe para otro cliente, de lo contrario `false`.
+     */
     boolean emailExistsForOtherCustomer(int customerId, String email);
 
+    /**
+     * Verifica si un número de teléfono ya existe para otro cliente distinto al proporcionado.
+     *
+     * @param customerId Identificador único del cliente actual.
+     * @param phone      Número de teléfono a verificar.
+     * @return `true` si el teléfono ya existe para otro cliente, de lo contrario `false`.
+     */
     boolean phoneExistsForOtherCustomer(int customerId, String phone);
 }
