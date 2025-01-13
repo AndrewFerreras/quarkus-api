@@ -60,7 +60,7 @@ public class CountryService implements ICountryService {
      * Valida si un prefijo telefónico pertenece al código de país proporcionado.
      *
      * @param countryCode Código del país (ISO 3166-1 alfa-3).
-     * @param phonePrefix Prefijo telefónico (ejemplo: "+57").
+     * @param phonePrefix Prefijo telefónico (ejemplo: "809").
      * @return `true` si el prefijo pertenece al país, de lo contrario `false`.
      */
     public boolean isPhonePrefixForCountry(String countryCode, String phonePrefix) {
